@@ -9,14 +9,15 @@
     <link rel="stylesheet" href="styles/index.css.js" />
   </head>
   <body>
-    [! for (var i = 0; i < 10; i++) { !]
-    <p>line [= i =]</p>
-    [! } !]
+    <h1>[= java.lang.String.format('%s %s%s', request.getMethod(), request.getPath(), request.getQuery()) =]</h1>
     <dl>
       <dt>JSS</dt>
       <dd>JavaScript Server</dd>
       <dt>JSSP</dt>
       <dd>JavaScript Server Page</dd>
     </dl>
+    [! for (var i = 0; i < 10; i++) { !]
+    <p>line [= i =]</p>
+    [! } !]
   </body>
 </html>

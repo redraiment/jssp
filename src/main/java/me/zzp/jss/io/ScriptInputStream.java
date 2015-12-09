@@ -64,9 +64,9 @@ public class ScriptInputStream extends InputStream {
     }
 
     private void suffix() {
-        if (state == State.Plain) {
+        if (last == State.Plain) {
             append(PLAIN_SUFFIX);
-        } else if (state == State.Expression) {
+        } else if (last == State.Expression && state == State.Plain) {
             append(EXPRESSION_SUFFIX);
         }
     }
@@ -76,9 +76,9 @@ public class ScriptInputStream extends InputStream {
             return;
         }
 
-        suffix();
         last = this.state;
         this.state = state;
+        suffix();
         prefix();
     }
 
@@ -93,6 +93,8 @@ public class ScriptInputStream extends InputStream {
     }
 
     private void end() {
+        last = state;
+        state = null;
         suffix();
         finished = true;
     }

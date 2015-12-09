@@ -1,4 +1,4 @@
-package me.zzp.jss;
+package me.zzp.jss.io;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -14,9 +14,9 @@ import java.util.LinkedList;
  *     <dd>表达式</dd>
  * </dl>
  */
-class ScriptInputStream extends InputStream {
+public class ScriptInputStream extends InputStream {
 
-    private static enum State {
+    public static enum State {
         Plain,
         Script,
         Expression,
@@ -35,7 +35,7 @@ class ScriptInputStream extends InputStream {
     private State state;
     private boolean finished;
 
-    ScriptInputStream(InputStream source) {
+    public ScriptInputStream(InputStream source) {
         this.source = source;
         queue = new LinkedList<>();
         start();

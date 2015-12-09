@@ -1,7 +1,7 @@
 package me.zzp.jss.wrapper;
 
 import com.sun.net.httpserver.HttpExchange;
-import me.zzp.jss.io.File;
+import me.zzp.jss.io.Resource;
 import me.zzp.jss.io.ScriptInputStream;
 import me.zzp.jss.scope.Application;
 import me.zzp.jss.scope.Context;
@@ -16,7 +16,6 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import java.io.InputStreamReader;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -28,10 +27,10 @@ public final class ResourceWrapper implements Wrapper {
         engines = new ScriptEngineManager();
     }
 
-    private void execute(File file, Context context) {
+    private void execute(Resource resource, Context context) {
         ScriptEngine engine = null;
-        if (file.hasMinorExtension()) {
-            engine = engines.getEngineByName(file.getMajorExtension());
+        if (resource.hasMinorExtension()) {
+            engine = engines.getEngineByExtension(resource.getMajorExtension());
         }
 
         Application application = context.getApplication();
@@ -41,7 +40,7 @@ public final class ResourceWrapper implements Wrapper {
         Page page = context.getPage();
 
         if (engine == null) {
-            response.write(file.getBody());
+            response.write(resource.getBody());
         } else {
             Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
             bindings.put("application", application);
@@ -50,7 +49,7 @@ public final class ResourceWrapper implements Wrapper {
             bindings.put("response", response);
             bindings.put("page", page);
             try {
-                engine.eval(new InputStreamReader(new ScriptInputStream(file.getInputStream())), bindings);
+                engine.eval(new InputStreamReader(new ScriptInputStream(resource.getInputStream())), bindings);
             } catch (ScriptException e) {
                 response.setStatus(500);
                 response.setContent(e.getMessage());
@@ -66,13 +65,10 @@ public final class ResourceWrapper implements Wrapper {
         Response response = context.getResponse();
 
         Path path = Paths.get(application.getRoot(), request.getPath());
-        if (Files.isDirectory(path)) {
-            path = Paths.get(application.getRoot(), request.getPath(), application.getIndex());
-        }
-        File file = new File(path);
-        if (file.exists()) {
-            response.setContentType(file.getMimeType());
-            execute(file, context);
+        Resource resource = Resource.find(path, application.getIndex());
+        if (resource.exists()) {
+            response.setContentType(resource.getMimeType());
+            execute(resource, context);
         } else {
             exchange.sendResponseHeaders(404, 0);
         }

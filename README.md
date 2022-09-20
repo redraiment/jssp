@@ -1,10 +1,62 @@
-# JavaScript Server
+# JVM Scripting Server Pages
 
-纯Java实现的一个轻量的Web服务器，可在服务器端运行JavaScript代码。功能类似`php -S localhost:8000`，即以当前目录为根目录开启`Web`服务，只不过服务器端运行的是`JavaScript`而不是`PHP`。
+JVM Scripting Server page (also shortened as JSSP) is a templating system that embeds JVM scripting language into a text document, similar to JSP, PHP, ASP, and other server-side scripting languages.
 
-脚本文件采用两个扩展名命名，例如`index.html.js`表示这是一个在服务器端运行的脚本，采用`js`引擎，生成`html`代码；同理，`index.css.bsh`表示这个脚本采用`BeanShell`引擎，生成`css`代码。
+# Roadmap
 
-`JSS`的定位是一个模板引擎，提供类似`PHP`、`JSP`的功能，但语法有点不同：
+* [ ] Works on both client-side and server-side.
+  * [ ] Client-side mode would output document to stdout.
+  * [ ] Server-side mode would response document to HTTP client.
+* [ ] Multi-language support.
+  * [ ] Clojure
+  * [ ] JavaScript
+  * [ ] Groovy
+  * [ ] BeanShell
+  * [ ] Jython
+  * [ ] JRuby
+* [ ] Language auto recognized by file name extension.
+* [ ] Embeded pattern changeable.
+  * default '[! !]' for scriptlet.
+  * default '[= =]' for value expression.
+* [ ] Context object available with JSON datafile.
+* [ ] Print statement available.
 
-1. `[! !]`：插入脚本。例如`[! response.print('<h1>Hello world</h1>'); !]`。
-2. `[= =]`：插入表达式。例如`[= 1 + 2 =]`。
+# Getting Started
+
+## Running using Docker (Recommended)
+
+_TODO_
+
+## Install with Source Code
+
+_TODO_
+
+# Usage
+
+_TODO_
+
+## Options
+
+_TODO_
+
+## Examples
+
+_TODO_
+
+# Contributing
+
+If you have a suggestion that would make this better, please fork the repo and create a pull request. You can also simply open an issue with the tag "enhancement". Don't forget to give the project a star! Thanks again!
+
+1. Fork the Project
+1. Create your Feature Branch (git checkout -b feature/AmazingFeature)
+1. Commit your Changes (git commit -m 'Add some AmazingFeature')
+1. Push to the Branch (git push origin feature/AmazingFeature)
+1. Open a Pull Request
+
+# License
+
+Distrubuted under the GPLv3 License. See `LICENSE` for more information.
+
+# Contact
+
+* Zhang, Zepeng - [@redraiment](https://twitter.com/redraiment) - [redraiment@gmail.com](mailto:redraiment@gmail.com)

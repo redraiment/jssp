@@ -15,7 +15,7 @@ JVM Scripting Server page (also shortened as JSSP) is a templating system that e
   * [ ] Jython
   * [ ] JRuby
 * [ ] Language auto recognized by file name extension.
-* [ ] Embeded pattern changeable.
+* [ ] Embedded pattern changeable.
   * [ ] default '[! !]' for scriptlet.
   * [ ] default '[= =]' for value expression.
 * [ ] Context object available with JSON datafile.

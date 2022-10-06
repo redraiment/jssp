@@ -5,17 +5,17 @@ JVM Scripting Server page (also shortened as JSSP) is a templating system that e
 # Roadmap
 
 * [ ] Works on both client-side and server-side.
-  * [ ] Client-side mode would output document to stdout.
+  * [x] Client-side mode would output document to stdout.
   * [ ] Server-side mode would response document to HTTP client.
-* [ ] Multi-language support.
-  * [ ] JavaScript
-  * [ ] Groovy
-  * [ ] BeanShell
-  * [ ] JRuby
-* [ ] Language auto recognized by file name extension.
-* [ ] Embedded pattern changeable.
-  * [ ] default '[! !]' for scriptlet.
-  * [ ] default '[= =]' for value expression.
+* [x] Multi-language support.
+  * [x] JavaScript
+  * [x] Groovy
+  * [x] BeanShell
+  * [x] JRuby
+* [x] Language auto recognized by file name extension.
+* [x] Embedded pattern changeable.
+  * [x] default '[! !]' for scriptlet.
+  * [x] default '[= =]' for value expression.
 * [ ] Context object available with JSON datafile.
 * [ ] Print statement available.
 
@@ -53,7 +53,7 @@ If you have a suggestion that would make this better, please fork the repo and c
 
 # License
 
-Distrubuted under the GPLv3 License. See `LICENSE` for more information.
+Distrubuted under the Apache v2 License. See `LICENSE` for more information.
 
 # Contact
 

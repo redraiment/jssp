@@ -8,11 +8,9 @@ JVM Scripting Server page (also shortened as JSSP) is a templating system that e
   * [ ] Client-side mode would output document to stdout.
   * [ ] Server-side mode would response document to HTTP client.
 * [ ] Multi-language support.
-  * [ ] Clojure
   * [ ] JavaScript
   * [ ] Groovy
   * [ ] BeanShell
-  * [ ] Jython
   * [ ] JRuby
 * [ ] Language auto recognized by file name extension.
 * [ ] Embedded pattern changeable.

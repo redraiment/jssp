@@ -19,10 +19,6 @@
                :header ""
                :prefix "System.out.print("
                :suffix ");"}
-   :Jython {:engine (. script-engine-manager getEngineByName "jython")
-            :header "import java.lang.System\n"
-            :prefix "java.lang.System.out.print("
-            :suffix ");"}
    :JRuby {:engine (. script-engine-manager getEngineByName "jruby")
            :header ""
            :prefix "java.lang.System.out.print("

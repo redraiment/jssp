@@ -1,45 +1,54 @@
 # JVM Scripting Server Pages
 
-JVM Scripting Server page (also shortened as JSSP) is a templating system that embeds JVM scripting language into a text document, similar to JSP, PHP, ASP, and other server-side scripting languages.
+JVM Scripting Server page (also shortened as JSSP) is a polyglot templating system that embeds JVM scripting language into a text document, similar to JSP, PHP, ASP, and other server-side scripting languages.
 
-# Roadmap
+# Getting Started with Docker
 
-* [ ] Works on both client-side and server-side.
-  * [x] Client-side mode would output document to stdout.
-  * [ ] Server-side mode would response document to HTTP client.
-* [x] Multi-language support.
-  * [x] JavaScript
-  * [x] Groovy
-  * [x] BeanShell
-  * [x] JRuby
-* [x] Language auto recognized by file name extension.
-* [x] Embedded pattern changeable.
-  * [x] default '[! !]' for scriptlet.
-  * [x] default '[= =]' for value expression.
-* [ ] Context object available with JSON datafile.
-* [ ] Print statement available.
+```sh
+docker run --rm redraiment/jssp
+```
 
-# Getting Started
+# Tutorial
 
-## Running using Docker (Recommended)
+## Basic Example
 
-_TODO_
+## Trimming Spaces
 
-## Install with Source Code
+## Include and IncludeOnce
 
-_TODO_
+## Lifecycles
 
-# Usage
+* Generating
+* Executing
 
-_TODO_
+## Context Data String
+
+## Context Data File
+
+## HTTP Server
+
+## Multi-Language Support
+
+* JavaScript
+* Groovy
+* BeanShell (Java)
+* JRuby (Ruby)
+
+## Preamble and Postamble
+
+# Command Reference
+
+## Usage
 
 ## Options
 
-_TODO_
+* patterns
+* expand-times
+* context
+  * String
+  * File
 
-## Examples
-
-_TODO_
+## Built-in Functions
 
 # Contributing
 

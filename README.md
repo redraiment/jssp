@@ -1,5 +1,7 @@
 # JVM Scripting Server Pages
 
+[![Clojure CI](https://github.com/redraiment/jssp/actions/workflows/clojure.yml/badge.svg)](https://github.com/redraiment/jssp/actions/workflows/clojure.yml)
+
 JVM Scripting Server page (also shortened as JSSP) is a polyglot templating system that embeds JVM scripting language into a text document, similar to JSP, PHP, ASP, and other server-side scripting languages.
 
 # Getting Started with Docker

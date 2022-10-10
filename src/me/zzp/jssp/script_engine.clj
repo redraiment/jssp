@@ -111,6 +111,11 @@ Concat the scripts with below order:
   "Map of File Name Extension & Script Engine"
   (atom {}))
 
+(defn of
+  "Obtains script engine by file name extension."
+  [extension]
+  (get @extensions-engines extension))
+
 (when-not *compile-files*
   "Register Script Engines"
   (doseq [factory (.getEngineFactories (ScriptEngineManager.))
@@ -118,8 +123,3 @@ Concat the scripts with below order:
     (swap! script-engines conj script-engine)
     (doseq [extension (.getExtensions factory)]
       (swap! extensions-engines conj [extension script-engine]))))
-
-(defn of
-  "Obtains script engine by file name extension."
-  [extension]
-  (get @extensions-engines extension))

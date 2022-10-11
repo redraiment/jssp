@@ -51,9 +51,9 @@
     "Create an new script context and initialized with context data (hash-map).")
   (compile! [this instructions context]
     "Generate the source code from instructions.
-NOTE: this function maybe has side-effect.")
-  (execute [this instructions] [this instructions data]
-    "Execute template AST instructions with context data (hash-map)."))
+NOTE: this function may have side effects.")
+  (execute! [this instructions] [this instructions context]
+    "Execute template AST instructions with ScriptContext."))
 
 (defrecord ScriptEngine [engine preamble postamble]
 
@@ -69,7 +69,7 @@ NOTE: this function maybe has side-effect.")
   (compile! [{:keys [engine preamble postamble]} instructions context]
     "Compile the instructions to source code.
 
-NOTE: this function will change the bindings of context.
+NOTE: this function may change the bindings of context.
 
 Instructions preprocessing:
 - statement content: output directly.
@@ -90,13 +90,13 @@ Concat the scripts with below order:
                     (.getProgram (.getFactory engine)))]
       (str preamble scripts postamble)))
 
-  (execute [this instructions]
-    (execute this instructions {}))
+  (execute! [this instructions]
+    "Execute instructions as script with empty context, and return the output."
+    (execute! this instructions (create-context this {})))
 
-  (execute [{:keys [engine] :as this} instructions data]
-    "Execute instructions as script with context data, and return the output."
-    (let [context (create-context this data)
-          code (compile! this instructions context)
+  (execute! [{:keys [engine] :as this} instructions context]
+    "Execute instructions as script with script context, and return the output."
+    (let [code (compile! this instructions context)
           bindings (:bindings context)]
       (.eval engine code bindings)
       (str (get bindings BUFFER-NAME)))))

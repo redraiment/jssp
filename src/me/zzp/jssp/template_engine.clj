@@ -1,108 +1,127 @@
 (ns me.zzp.jssp.template-engine
-  "Template Engine"
-  (:refer-clojure :exclude [apply])
+  "Template Engine: parse and render templates."
   (:require [clojure.string :as cs]
-            [me.zzp.jssp.options :as options])
-  (:import java.util.HashMap
-           java.util.regex.Pattern
-           javax.script.ScriptEngineManager))
+            [me.zzp.jssp.script-engine
+             :as script-engine
+             :refer [create-context
+                     execute!]])
+  (:import java.util.regex.Pattern))
 
-(def ^:private script-engine-manager
-  (ScriptEngineManager.))
+(def ^:dynamic *options*
+  "Template engine render options."
+  {;; Embedded Patterns
+   :patterns {:expanding {:statement {:prefix "@!" :suffix "!@"}
+                          :expression {:prefix "@=" :suffix "=@"}}
+              :executing {:statement {:prefix "[!" :suffix "!]"}
+                          :expression {:prefix "[=" :suffix "=]"}}}
+   ;; Context Data Object
+   :context {}})
 
-(def script-engines
-  {:Nashorn {:engine (. script-engine-manager getEngineByName "Nashorn")
-             :header ""
-             :prefix "Packages.java.lang.System.out.print("
-             :suffix ");"}
-   :BeanShell {:engine (. script-engine-manager getEngineByName "beanshell")
-               :header ""
-               :prefix "System.out.print("
-               :suffix ");"}
-   :JRuby {:engine (. script-engine-manager getEngineByName "jruby")
-           :header ""
-           :prefix "java.lang.System.out.print("
-           :suffix ");"}
-   :Groovy {:engine (. script-engine-manager getEngineByName "Groovy")
-            :header ""
-            :prefix "System.out.print("
-            :suffix ");"}})
+(defn- lexical-analysis
+  "Split the template with patterns, return the sequence of tokens.
+  Pattern format:
+    {:statement {:prefix STRING :suffix STRING}
+     :expression {:prefix STRING :suffix STRING}}"
+  [template patterns]
+  (->> patterns
+    ;; get patterns
+    vals
+    (mapcat vals)
+    (into #{})
 
-(def script-engine-extensions
-  (->> script-engines
-    (mapcat (fn [[name {:keys [engine]}]]
-              (map #(vector % name) (.. engine getFactory getExtensions))))
-    (into {})))
-
-(def script-engine-of
-  (comp script-engines
-        script-engine-extensions))
-
-(def separator
-  (->> #{options/statement-prefix
-         options/statement-suffix
-         options/expression-prefix
-         options/expression-suffix}
+    ;; convert to regular expression pattern
     (map #(Pattern/quote %))
     (cs/join "|")
     (format "(?=%1$s)|(?<=%1$s)")
-    (re-pattern)))
+    (re-pattern)
 
-(defn parse
-  [content]
-  (loop [[token & tokens] (cs/split content separator)
+    ;; tokenizate
+    (cs/split template)))
+
+(defn- syntax-analysis
+  "Convert tokens to AST.
+  - statement element: tokens between statement patterns.
+  - expression element: tokens between statement patterns.
+  - literal: others tokens.
+
+  Pattern format same with lexical analysis.
+  Element format: [TAG TOKEN]
+  AST format: [ELEMENT...]"
+  [tokens {{statement-prefix :prefix
+            statement-suffix :suffix}
+           :statement
+           {expression-prefix :prefix
+            expression-suffix :suffix}
+           :expression}]
+  (loop [[token & tokens] tokens
          tag :literal
          ast []]
     (cond
+      ;; End
       (nil? token)
       ast
 
+      ;; Exit statement & expression context
       (or (and (= tag :statement)
-               (= token options/statement-suffix))
+               (= token statement-suffix))
           (and (= tag :expression)
-               (= token options/expression-suffix)))
+               (= token expression-suffix)))
       (recur tokens :literal ast)
 
+      ;; Enter statement context
       (and (= tag :literal)
-           (= token options/statement-prefix))
+           (= token statement-prefix))
       (recur tokens :statement ast)
 
+      ;; Enter expression context
       (and (= tag :literal)
-           (= token options/expression-prefix))
+           (= token expression-prefix))
       (recur tokens :expression ast)
 
+      ;; Collect element with context
       :else
       (recur tokens tag (conj ast [tag token])))))
 
-(defn apply
+(defn- parse
+  "Parse template to AST."
+  [template patterns]
+  (-> template
+    (lexical-analysis patterns)
+    (syntax-analysis patterns)))
+
+(defn- render-recursively
+  "Renders repeatedly a string template with data until stop the limit times is reached, or no more prefix patterns can be found if the limit is nil."
+  ([engine template context patterns]
+   (render-recursively engine template context patterns nil))
+  ([engine template context patterns limit]
+   (let [prefixes (map :prefix (vals patterns))]
+     (loop [expanded-template template
+            times 0]
+       (if (and (some (partial (memfn contains pattern) expanded-template)
+                      prefixes)
+                (or (nil? limit)
+                    (< times limit)))
+         (recur (execute! engine (parse expanded-template patterns) context)
+                (inc times))
+         expanded-template)))))
+
+(defn render-string
+  "Renders a string template with data.
+
+  There are two render phases:
+  1. Expanding phase: render repeatedly with expanding patterns until no more patterns can be found, to compute another template which will in turn render.
+  2. Executing phase: render with executing patterns once."
+  [engine template]
+  (let [context (create-context engine (:context *options*))
+        expanded-template (render-recursively engine template context (get-in *options* [:patterns :expanding]))]
+    (render-recursively engine expanded-template context (get-in *options* [:patterns :executing]))))
+
+(defn render-file
+  "Renders a file template with data.
+
+  Auto choose script engine by file extension."
   ([template-file-name]
-   (apply template-file-name {}))
-  ([template-file-name context]
    (let [extension (last (cs/split template-file-name #"\."))
-         {:keys [engine header prefix suffix]}
-         (script-engine-of extension)
-         content (slurp template-file-name)
-
-         bindings (doto (. engine createBindings)
-                    (.putAll context))
-         var-name-seq (atom 0)
-         next-var-name (fn []
-                         (str "$_" (swap! var-name-seq inc) "_$"))
-         next-available-var-name (fn []
-                                   (loop [var-name (next-var-name)]
-                                     (if (contains? bindings var-name)
-                                       (recur (next-var-name))
-                                       var-name)))
-
-         program (->> content
-                   parse
-                   (map (fn [[tag token]]
-                          (case tag
-                            :literal (let [var-name (next-available-var-name)]
-                                       (. bindings put var-name token)
-                                       (str prefix var-name suffix))
-                            :expression (str prefix token suffix)
-                            :statement token)))
-                   (cons header)
-                   (cs/join ""))]
-     (. engine eval program bindings))))
+         engine (script-engine/of extension)
+         template (slurp template-file-name)]
+     (render-string engine template))))

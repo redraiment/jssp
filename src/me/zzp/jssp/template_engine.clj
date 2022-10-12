@@ -4,18 +4,10 @@
             [me.zzp.jssp.script-engine
              :as script-engine
              :refer [create-context
-                     execute!]])
+                     execute!]]
+            [me.zzp.jssp.options
+             :refer [*global-options*]])
   (:import java.util.regex.Pattern))
-
-(def ^:dynamic *options*
-  "Template engine render options."
-  {;; Embedded Patterns
-   :patterns {:expanding {:statement {:prefix "@!" :suffix "!@"}
-                          :expression {:prefix "@=" :suffix "=@"}}
-              :executing {:statement {:prefix "[!" :suffix "!]"}
-                          :expression {:prefix "[=" :suffix "=]"}}}
-   ;; Context Data Object
-   :context {}})
 
 (defn- lexical-analysis
   "Split the template with patterns, return the sequence of tokens.
@@ -112,9 +104,9 @@
   1. Expanding phase: render repeatedly with expanding patterns until no more patterns can be found, to compute another template which will in turn render.
   2. Executing phase: render with executing patterns once."
   [engine template]
-  (let [context (create-context engine (:context *options*))
-        expanded-template (render-recursively engine template context (get-in *options* [:patterns :expanding]))]
-    (render-recursively engine expanded-template context (get-in *options* [:patterns :executing]))))
+  (let [context (create-context engine (:context *global-options*))
+        expanded-template (render-recursively engine template context (get-in *global-options* [:patterns :expanding]))]
+    (render-recursively engine expanded-template context (get-in *global-options* [:patterns :executing]))))
 
 (defn render-file
   "Renders a file template with data.

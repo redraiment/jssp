@@ -4,6 +4,8 @@
   :license {:name "Apache License - Version 2.0, January 2004"
             :url "http://www.apache.org/licenses/"}
   :dependencies [[org.clojure/clojure "1.11.1"]
+                 [org.clojure/tools.cli "1.0.214"]
+                 [cheshire "5.11.0"]
                  [org.apache-extras.beanshell/bsh "2.0b6"]
                  [org.codehaus.groovy/groovy-jsr223 "3.0.13"]
                  [org.jruby/jruby "9.3.8.0"]]

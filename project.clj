@@ -1,4 +1,4 @@
-(defproject me.zzp/jssp "0.1.0-SNAPSHOT"
+(defproject me.zzp/jssp "0.2.0"
   :description "JVM Scripting Server page (also shortened as JSSP) is a templating system that embeds JVM scripting language into a text document, similar to JSP, PHP, ASP, and other server-side scripting languages."
   :url "https://github.com/redraiment/jssp"
   :license {:name "Apache License - Version 2.0, January 2004"

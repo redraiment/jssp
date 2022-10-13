@@ -7,7 +7,8 @@
                      execute!]]
             [me.zzp.jssp.options
              :refer [*global-options*]])
-  (:import java.util.regex.Pattern))
+  (:import java.util.regex.Pattern)
+  (:gen-class))
 
 (defn- lexical-analysis
   "Split the template with patterns, return the sequence of tokens.

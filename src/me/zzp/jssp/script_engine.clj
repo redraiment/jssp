@@ -3,6 +3,9 @@
   Support JavaScript, Groovy, JRuby, BeanShell."
   (:require [clojure.string :as cs])
   (:import java.lang.StringBuffer
+           java.util.concurrent.ConcurrentHashMap
+           java.util.function.Function
+           java.util.function.BiFunction
            javax.script.ScriptEngineManager)
   (:gen-class))
 
@@ -60,11 +63,27 @@ NOTE: this function may have side effects.")
   Executor
 
   (create-context [{:keys [engine]} data]
-    "Create an new ScriptContext record."
-    (->ScriptContext (doto (.createBindings engine)
-                       (.putAll data)
-                       (.put BUFFER-NAME (StringBuffer.)))
-                     (atom 0)))
+    "Create an new ScriptContext record.
+Initial with specified context data and built-in functions."
+    (let [cache (ConcurrentHashMap.)
+          generate-sequence (atom 0)
+          include (reify Function
+                    (apply [this path]
+                      (slurp path)))
+          readOnce (reify BiFunction
+                     (apply [this path content]
+                       (if (nil? content)
+                         (slurp path)
+                         "")))
+          includeOnce (reify Function
+                        (apply [this path]
+                          (.compute cache path readOnce)))]
+      (->ScriptContext (doto (.createBindings engine)
+                         (.putAll data)
+                         (.put BUFFER-NAME (StringBuffer.))
+                         (.put "include" include)
+                         (.put "includeOnce" includeOnce))
+                       generate-sequence)))
 
   (compile! [{:keys [engine preamble postamble]} instructions context]
     "Compile the instructions to source code.
@@ -97,9 +116,11 @@ Concat the scripts with below order:
   (execute! [{:keys [engine] :as this} instructions context]
     "Execute instructions as script with script context, and return the output."
     (let [code (compile! this instructions context)
-          bindings (:bindings context)]
-      (.eval engine code bindings)
-      (str (get bindings BUFFER-NAME)))))
+          bindings (:bindings context)
+          buffer (doto (get bindings BUFFER-NAME)
+                   (.setLength 0))]
+      (. engine eval code bindings)
+      (str buffer))))
 
 ;;;; Engine Instances
 

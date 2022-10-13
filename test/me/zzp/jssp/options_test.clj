@@ -1,6 +1,6 @@
 (ns me.zzp.jssp.options-test
   "Test options parser."
-  (:require [me.zzp.jssp.options :refer [validate]]
+  (:require [me.zzp.jssp.options :refer [*global-options* validate]]
             [clojure.test :refer [deftest is are]]
             [clojure.string :as cs]))
 
@@ -42,13 +42,7 @@ Failed to validate \"--executing-expression D\": both prefix and suffix of execu
         payload]
     (is (= :local action))
     (is (= "examples/local-mode/hello-world.md.js" template))
-    (is (= {:patterns {:expanding {:statement {:prefix "@!" :suffix "!@"}
-                                   :expression {:prefix "@=" :suffix "=@"}}
-                       :executing {:statement {:prefix "[!" :suffix "!]"}
-                                   :expression {:prefix "[=" :suffix "=]"}}}
-            :context {}
-            :trim true}
-           options))))
+    (is (= *global-options* options))))
 
 (deftest context-data-test
   (let [{:keys [action payload]}
@@ -68,3 +62,16 @@ Failed to validate \"--executing-expression D\": both prefix and suffix of execu
                    "examples/local-mode/hello-world.md.js"])]
     (is (= :local action))
     (is (not (get-in payload [:options :trim])))))
+
+(deftest emit-code-test
+  (let [{:keys [action payload]}
+        (validate ["-x" "examples/local-mode/hello-world.md.js"])]
+    (is (= :local action))
+    (is (get-in payload [:options :emit-code]))))
+
+(deftest max-expand-times-test
+  (let [{:keys [action payload]}
+        (validate ["-m" "12"
+                   "examples/local-mode/hello-world.md.js"])]
+    (is (= :local action))
+    (is (= 12 (get-in payload [:options :expand-limit])))))

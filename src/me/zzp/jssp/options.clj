@@ -10,7 +10,14 @@
   "Global options:
   * patterns: embedded patterns for expanding & executing.
   * context: context data object"
-  nil)
+  {:patterns {:expanding {:statement {:prefix "@!" :suffix "!@"}
+                          :expression {:prefix "@=" :suffix "=@"}}
+              :executing {:statement {:prefix "[!" :suffix "!]"}
+                          :expression {:prefix "[=" :suffix "=]"}}}
+   :context {}
+   :trim true
+   :emit-code false
+   :expand-limit nil})
 
 (defn- pattern-parse
   "Parse pattern pair."
@@ -63,6 +70,10 @@
     :default-desc "[= =]"
     :parse-fn pattern-parse
     :validate [pattern-validate "both prefix and suffix of executing expression must not be empty."]]
+   ["-m" "--expand-limit TIMES" "limit expanding phase run times"
+    :default nil
+    :parse-fn #(Long/parseLong %)]
+   ["-x" "--emit-code" "emit converted code"]
    ["-h" "--help" "show help and exit"]])
 
 (defn usage
@@ -99,13 +110,15 @@ E-mail bug reports to: redraiment@gmail.com"))
   [{:keys [expanding-statement expanding-expression
            executing-statement executing-expression
            context-file context-string
-           trim]}]
+           trim emit-code expand-limit]}]
   {:patterns {:expanding {:statement expanding-statement
                           :expression expanding-expression}
               :executing {:statement executing-statement
                           :expression executing-expression}}
    :context (or context-file context-string)
-   :trim trim})
+   :trim trim
+   :emit-code (boolean emit-code)
+   :expand-limit expand-limit})
 
 (defn validate
   "Validate command line arguments."

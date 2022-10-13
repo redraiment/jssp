@@ -145,8 +145,12 @@
   2. Executing phase: render with executing patterns once."
   [engine template]
   (let [context (create-context engine (:context *global-options*))
-        expanded-template (render-recursively engine template context (get-in *global-options* [:patterns :expanding]))]
-    (render-recursively engine expanded-template context (get-in *global-options* [:patterns :executing]))))
+        expanded-template (render-recursively engine template context
+                                              (get-in *global-options* [:patterns :expanding])
+                                              (get *global-options* :expand-limit))]
+    (if (get *global-options* :emit-code)
+      expanded-template
+      (render-recursively engine expanded-template context (get-in *global-options* [:patterns :executing]) 1))))
 
 (defn render-file
   "Renders a file template with data.

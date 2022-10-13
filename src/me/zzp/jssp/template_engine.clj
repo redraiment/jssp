@@ -74,12 +74,52 @@
       :else
       (recur tokens tag (conj ast [tag token])))))
 
+(defn- trim
+  "Trim spaces around statement."
+  [stream]
+  (if (:trim *global-options*)
+    (loop [[[tag1 context1 :as element1] & elements]
+           (cons [:literal "\n"] stream)
+
+           ast []]
+      (let [[[tag2 context2 :as element2]
+             [tag3 context3 :as element3]
+             & _]
+            elements]
+        (cond
+          ;; End
+          (nil? tag1)
+          (next ast)
+
+          (and (= :literal tag1)
+               (or (re-find #"\n[^\S\n]*$" context1)
+                   (re-matches #"[^\S\n]+" context1))
+               (= :statement tag2)
+               (or (not= :literal tag3)
+                   (re-find #"^[^\S\n]*\n" context3)
+                   (re-matches #"[^\S\n]+" context3)))
+          (recur (->> elements
+                   next
+                   next
+                   (cons (if tag3
+                           [tag3 (-> context3
+                                   (cs/replace #"^[^\S\n]+" "")
+                                   (cs/replace #"^\n" ""))]
+                           element3))
+                   (cons element2))
+                 (conj ast [tag1 (cs/replace context1 #"[^\S\n]+$" "")]))
+
+          :else
+          (recur elements (conj ast element1)))))
+    stream))
+
 (defn- parse
   "Parse template to AST."
   [template patterns]
   (-> template
     (lexical-analysis patterns)
-    (syntax-analysis patterns)))
+    (syntax-analysis patterns)
+    trim))
 
 (defn- render-recursively
   "Renders repeatedly a string template with data until stop the limit times is reached, or no more prefix patterns can be found if the limit is nil."

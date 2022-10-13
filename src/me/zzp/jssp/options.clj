@@ -40,6 +40,9 @@
    ["-f" "--context-file JSON-FILE" "context data file name"
     :parse-fn context-file-parse
     :validate [(comp not nil?) "invalid file content"]]
+   ["-t" "--trim BOOLEAN" "switch to delete spaces around statement"
+    :default true
+    :parse-fn #(Boolean/parseBoolean %)]
    [nil "--expanding-statement PATTERN" "expanding statement pattern pair"
     :default {:prefix "@!" :suffix "!@"}
     :default-desc "@! !@"
@@ -91,15 +94,18 @@ E-mail bug reports to: redraiment@gmail.com"))
   * {:expanding-expression} to {:patterns {:expanding {:expression}}}
   * {:executing-statement} to {:patterns {:executing {:statement}}}
   * {:executing-expression} to {:patterns {:executing {:expression}}}
-  * {:context-file} and {:context-string} to {:context}"
+  * {:context-file} and {:context-string} to {:context}
+  * {:trim} to {:trim}"
   [{:keys [expanding-statement expanding-expression
            executing-statement executing-expression
-           context-file context-string]}]
+           context-file context-string
+           trim]}]
   {:patterns {:expanding {:statement expanding-statement
                           :expression expanding-expression}
               :executing {:statement executing-statement
                           :expression executing-expression}}
-   :context (or context-file context-string)})
+   :context (or context-file context-string)
+   :trim trim})
 
 (defn validate
   "Validate command line arguments."

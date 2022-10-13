@@ -46,7 +46,8 @@ Failed to validate \"--executing-expression D\": both prefix and suffix of execu
                                    :expression {:prefix "@=" :suffix "=@"}}
                        :executing {:statement {:prefix "[!" :suffix "!]"}
                                    :expression {:prefix "[=" :suffix "=]"}}}
-            :context {}}
+            :context {}
+            :trim true}
            options))))
 
 (deftest context-data-test
@@ -60,3 +61,10 @@ Failed to validate \"--executing-expression D\": both prefix and suffix of execu
     (is (= "examples/context-data/hello-world.md.js" template))
     (is (= {"skills" ["JavaScript" "Groovy" "JRuby" "BeanShell"]}
            (:context options)))))
+
+(deftest trim-test
+  (let [{:keys [action payload]}
+        (validate ["-t" "false"
+                   "examples/local-mode/hello-world.md.js"])]
+    (is (= :local action))
+    (is (not (get-in payload [:options :trim])))))

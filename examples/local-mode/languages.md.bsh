@@ -1,0 +1,6 @@
+[! String[] languages = new String[] { "JavaScript", "Groovy", "JRuby", "BeanShell" } !]
+# Languages
+
+[! for (String language : languages) { !]
+* [= language =]
+[! } !]

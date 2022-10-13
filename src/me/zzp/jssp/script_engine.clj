@@ -64,7 +64,7 @@ NOTE: this function may have side effects.")
 
   (create-context [{:keys [engine]} data]
     "Create an new ScriptContext record.
-Initial with specified context data and built-in functions."
+Initial with specified context data."
     (let [cache (ConcurrentHashMap.)
           generate-sequence (atom 0)
           include (reify Function
@@ -79,10 +79,7 @@ Initial with specified context data and built-in functions."
                         (apply [this path]
                           (.compute cache path readOnce)))]
       (->ScriptContext (doto (.createBindings engine)
-                         (.putAll data)
-                         (.put BUFFER-NAME (StringBuffer.))
-                         (.put "include" include)
-                         (.put "includeOnce" includeOnce))
+                         (.putAll data))
                        generate-sequence)))
 
   (compile! [{:keys [engine preamble postamble]} instructions context]
@@ -116,11 +113,8 @@ Concat the scripts with below order:
   (execute! [{:keys [engine] :as this} instructions context]
     "Execute instructions as script with script context, and return the output."
     (let [code (compile! this instructions context)
-          bindings (:bindings context)
-          buffer (doto (get bindings BUFFER-NAME)
-                   (.setLength 0))]
-      (. engine eval code bindings)
-      (str buffer))))
+          bindings (:bindings context)]
+      (. engine eval code bindings))))
 
 ;;;; Engine Instances
 
@@ -139,8 +133,86 @@ Concat the scripts with below order:
 
 (when-not *compile-files*
   "Register Script Engines"
-  (doseq [factory (.getEngineFactories (ScriptEngineManager.))
-          :let [script-engine (->ScriptEngine (.getScriptEngine factory) "" "")]]
-    (swap! script-engines conj script-engine)
-    (doseq [extension (.getExtensions factory)]
-      (swap! extensions-engines conj [extension script-engine]))))
+  (let [manager (ScriptEngineManager.)]
+    (doseq [{:keys [name preamble postamble]}
+            [{:name "js"
+              :preamble (format "var %s = new Packages.java.lang.StringBuffer();
+
+function include(path) {
+  return new Packages.java.lang.String(
+    Packages.java.nio.file.Files.readAllBytes(
+      Packages.java.nio.file.Paths.get(path)
+    ));
+}
+
+var includeOnce = (function() {
+  var cache = new Packages.java.util.concurrent.ConcurrentHashMap();
+  var readOnce = new Packages.java.util.function.BiFunction({
+     apply: function(path, content) {
+       return content === null ? include(path) : '';
+     }
+  });
+  return function(path) {
+    return cache.compute(path, readOnce);
+  };
+})();
+" BUFFER-NAME)
+              :postamble (str BUFFER-NAME ".toString()")}
+             {:name "jruby"
+              :preamble (str BUFFER-NAME " = java.lang.StringBuffer.new
+
+@_cache = java.util.concurrent.ConcurrentHashMap.new
+
+def include(path)
+  java.lang.String.new(java.nio.file.Files.readAllBytes(java.nio.file.Paths.get(path)))
+end
+
+def includeOnce(path)
+  @_cache.compute(path) do |path, content|
+    content.nil? ? include(path) : ''
+  end
+end
+")
+              :postamble (str BUFFER-NAME ".toString()")}
+             {:name "groovy"
+              :preamble (str BUFFER-NAME " = new java.lang.StringBuffer()
+
+def include(path) {
+  return new java.lang.String(java.nio.file.Files.readAllBytes(java.nio.file.Paths.get(path)))
+}
+
+def includeOnce = ({
+  def cache = new java.util.concurrent.ConcurrentHashMap()
+  return { path ->
+    return cache.compute(path) { _, content ->
+      return content == null ? include(path) : ''
+    }
+  }
+})()
+")
+              :postamble (str BUFFER-NAME ".toString()")}
+             {:name "beanshell"
+              :preamble (format "StringBuffer %s = new StringBuffer();
+String include(String path) {
+  return new String(java.nio.file.Files.readAllBytes(java.nio.file.Paths.get(path)));
+}
+
+java.util.concurrent.ConcurrentHashMap _cache = new java.util.concurrent.ConcurrentHashMap();
+java.util.function.BiFunction _readOnce = new java.util.function.BiFunction() {
+  Object apply(Object path, Object content) {
+    return content == null ? include(path) : \"\";
+  }
+};
+
+String includeOnce(String path) {
+  return _cache.compute(path, _readOnce);
+}
+" BUFFER-NAME)
+              :postamble (str BUFFER-NAME ".toString()")}]
+            :let [engine (.getEngineByName manager name)
+                  factory (.getFactory engine)
+                  script-engine (->ScriptEngine engine preamble postamble)]
+            ]
+      (swap! script-engines conj script-engine)
+      (doseq [extension (.getExtensions factory)]
+        (swap! extensions-engines conj [extension script-engine])))))

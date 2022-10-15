@@ -1,8 +1,19 @@
 (ns me.zzp.jssp.template-engine-test
   (:require [me.zzp.jssp
              [options :refer [*global-options*]]
-             [template-engine :refer [render-file]]]
+             [template-engine :refer [executable?
+                                      render-file]]]
             [clojure.test :refer [deftest is are]]))
+
+(deftest executable-test
+  (is (executable? "index.js"))
+  (is (executable? "index.bsh"))
+  (is (executable? "index.java"))
+  (is (executable? "index.rb"))
+  (is (executable? "index.groovy"))
+  (is (not (executable? ".groovy")))
+  (is (not (executable? "index.css")))
+  (is (not (executable? "index.html"))))
 
 (deftest polyglot-test
   (let [expected "# Languages

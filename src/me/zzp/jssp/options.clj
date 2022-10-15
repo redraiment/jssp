@@ -3,7 +3,8 @@
   (:require [clojure.string :as cs]
             [clojure.java.io :as io]
             [clojure.tools.cli :refer [parse-opts]]
-            [cheshire.core :refer [parse-string]])
+            [cheshire.core :refer [parse-string]]
+            [me.zzp.jssp.file :as file])
   (:gen-class))
 
 (def ^:dynamic *global-options*
@@ -17,7 +18,9 @@
    :context {}
    :trim true
    :emit-code false
-   :expand-limit nil})
+   :expand-limit nil
+   :server {:enable? false
+            :port 8080}})
 
 (defn- pattern-parse
   "Parse pattern pair."
@@ -37,7 +40,7 @@
   [file-name]
   (when (and (or (cs/ends-with? file-name ".json")
                  (cs/ends-with? file-name ".edn"))
-             (.exists (io/file file-name)))
+             (file/exists? file-name))
     (parse-string (slurp file-name))))
 
 (def ^:private command-line-options
@@ -74,6 +77,10 @@
     :default nil
     :parse-fn #(Long/parseLong %)]
    ["-x" "--emit-code" "emit expanded code"]
+   ["-s" "--server" "start inner http server"]
+   ["-p" "--port PORT" "http server port"
+    :default 8080
+    :parse-fn #(Integer/parseInt %)]
    ["-h" "--help" "show help and exit"]])
 
 (defn usage
@@ -88,7 +95,7 @@
 SYNOPSIS
 
   jssp [options] TEMPLATE-FILE
-  jssp [-s | --server] [options] WORK-DIRECTORY
+  jssp [-s | --server] [options]
 
 OPTIONS
 
@@ -106,11 +113,14 @@ E-mail bug reports to: redraiment@gmail.com"))
   * {:executing-statement} to {:patterns {:executing {:statement}}}
   * {:executing-expression} to {:patterns {:executing {:expression}}}
   * {:context-file} and {:context-string} to {:context}
-  * {:trim} to {:trim}"
+  * {:trim} to {:trim}
+  * {:server} to {:server {:enable?}}
+  : {:port} to {:server {:port}}"
   [{:keys [expanding-statement expanding-expression
            executing-statement executing-expression
            context-file context-string
-           trim emit-code expand-limit]}]
+           trim emit-code expand-limit
+           server port]}]
   {:patterns {:expanding {:statement expanding-statement
                           :expression expanding-expression}
               :executing {:statement executing-statement
@@ -118,7 +128,9 @@ E-mail bug reports to: redraiment@gmail.com"))
    :context (or context-file context-string)
    :trim trim
    :emit-code (boolean emit-code)
-   :expand-limit expand-limit})
+   :expand-limit expand-limit
+   :server {:enable? (boolean server)
+            :port port}})
 
 (defn validate
   "Validate command line arguments."
@@ -144,11 +156,19 @@ E-mail bug reports to: redraiment@gmail.com"))
       {:action :exit
        :payload "prefix patterns must be different"}
 
-      (not= 1 (count arguments))
+      (and (not (:server options))
+           (not= 1 (count arguments)))
       {:action :exit
-       :payload "support one template file or one work directory only"}
+       :payload "require a template file for outside mode"}
+
+      (and (:server options)
+           (pos? (count arguments)))
+      {:action :exit
+       :payload "no argument need for server-side mode"}
 
       :else
-      {:action :local
+      {:action (if (:server options)
+                 :server-side
+                 :outside)
        :payload {:options (transform options)
                  :template (first arguments)}})))

@@ -1,12 +1,13 @@
 (ns me.zzp.jssp.template-engine
   "Template Engine: parse and render templates."
   (:require [clojure.string :as cs]
-            [me.zzp.jssp.script-engine
-             :as script-engine
-             :refer [create-context
-                     execute!]]
-            [me.zzp.jssp.options
-             :refer [*global-options*]])
+            [me.zzp.jssp
+             [file :refer [major-extension]]
+             [script-engine
+              :as script-engine
+              :refer [create-context
+                      execute!]]
+             [options :refer [*global-options*]]])
   (:import java.util.regex.Pattern)
   (:gen-class))
 
@@ -122,6 +123,11 @@
     (syntax-analysis patterns)
     trim))
 
+(defn executable?
+  "Return true if and only if there is a script engine for the template file name."
+  [template-file-name]
+  (script-engine/executable? (major-extension template-file-name)))
+
 (defn- render-recursively
   "Renders repeatedly a string template with data until stop the limit times is reached, or no more prefix patterns can be found if the limit is nil."
   ([engine template context patterns]
@@ -158,7 +164,7 @@
 
   Auto choose script engine by file extension."
   ([template-file-name]
-   (let [extension (last (cs/split template-file-name #"\."))
+   (let [extension (major-extension template-file-name)
          engine (script-engine/of extension)
          template (slurp template-file-name)]
      (render-string engine template))))

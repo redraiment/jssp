@@ -11,13 +11,10 @@
 
 ;;;; Output Buffer
 
-(def ^:private BUFFER-NAME
-  "_buf")
-
 (defn- buffer-append
   "Generate append to buffer statement."
   [content]
-  (str BUFFER-NAME ".append(" content ")"))
+  (str "_buf.append(" content ")"))
 
 ;;;; Bindings
 
@@ -131,12 +128,17 @@ Concat the scripts with below order:
   [extension]
   (get @extensions-engines extension))
 
+(defn executable?
+  "Return true if and only if there is a script engine for the file extension."
+  [extension]
+  (contains? @extensions-engines extension))
+
 (when-not *compile-files*
   "Register Script Engines"
   (let [manager (ScriptEngineManager.)]
     (doseq [{:keys [name preamble postamble]}
             [{:name "js"
-              :preamble (format "var %s = new Packages.java.lang.StringBuffer();
+              :preamble "var _buf = new Packages.java.lang.StringBuffer();
 
 function include(path) {
   return new Packages.java.lang.String(
@@ -156,10 +158,14 @@ var includeOnce = (function() {
     return cache.compute(path, readOnce);
   };
 })();
-" BUFFER-NAME)
-              :postamble (str BUFFER-NAME ".toString()")}
+
+function escape(content) {
+  return Packages.org.apache.commons.text.StringEscapeUtils.escapeHtml4(content.toString());
+}
+"
+              :postamble "_buf.toString()"}
              {:name "jruby"
-              :preamble (str BUFFER-NAME " = java.lang.StringBuffer.new
+              :preamble "_buf = java.lang.StringBuffer.new
 
 @_cache = java.util.concurrent.ConcurrentHashMap.new
 
@@ -172,10 +178,14 @@ def includeOnce(path)
     content.nil? ? include(path) : ''
   end
 end
-")
-              :postamble (str BUFFER-NAME ".toString()")}
+
+def escape(content)
+  Java::OrgApacheCommonsText::StringEscapeUtils::escapeHtml4(content.toString())
+end
+"
+              :postamble "_buf.toString()"}
              {:name "groovy"
-              :preamble (str BUFFER-NAME " = new java.lang.StringBuffer()
+              :preamble "_buf = new java.lang.StringBuffer()
 
 def include(path) {
   return new java.lang.String(java.nio.file.Files.readAllBytes(java.nio.file.Paths.get(path)))
@@ -189,10 +199,14 @@ def includeOnce = ({
     }
   }
 })()
-")
-              :postamble (str BUFFER-NAME ".toString()")}
+
+def escape(content) {
+  return org.apache.commons.text.StringEscapeUtils.escapeHtml4(content.toString())
+}
+"
+              :postamble "_buf.toString()"}
              {:name "beanshell"
-              :preamble (format "StringBuffer %s = new StringBuffer();
+              :preamble "StringBuffer _buf = new StringBuffer();
 String include(String path) {
   return new String(java.nio.file.Files.readAllBytes(java.nio.file.Paths.get(path)));
 }
@@ -207,8 +221,12 @@ java.util.function.BiFunction _readOnce = new java.util.function.BiFunction() {
 String includeOnce(String path) {
   return _cache.compute(path, _readOnce);
 }
-" BUFFER-NAME)
-              :postamble (str BUFFER-NAME ".toString()")}]
+
+String escape(String content) {
+  return org.apache.commons.text.StringEscapeUtils.escapeHtml4(content.toString());
+}
+"
+              :postamble "_buf.toString()"}]
             :let [engine (.getEngineByName manager name)
                   factory (.getFactory engine)
                   script-engine (->ScriptEngine engine preamble postamble)]]

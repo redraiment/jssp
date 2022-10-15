@@ -40,7 +40,7 @@ Failed to validate \"--executing-expression D\": both prefix and suffix of execu
 
         {:keys [options template]}
         payload]
-    (is (= :local action))
+    (is (= :outside action))
     (is (= "examples/local-mode/hello-world.md.js" template))
     (is (= *global-options* options))))
 
@@ -51,7 +51,7 @@ Failed to validate \"--executing-expression D\": both prefix and suffix of execu
 
         {:keys [options template]}
         payload]
-    (is (= :local action))
+    (is (= :outside action))
     (is (= "examples/context-data/hello-world.md.js" template))
     (is (= {"skills" ["JavaScript" "Groovy" "JRuby" "BeanShell"]}
            (:context options)))))
@@ -60,18 +60,18 @@ Failed to validate \"--executing-expression D\": both prefix and suffix of execu
   (let [{:keys [action payload]}
         (validate ["-t" "false"
                    "examples/local-mode/hello-world.md.js"])]
-    (is (= :local action))
+    (is (= :outside action))
     (is (not (get-in payload [:options :trim])))))
 
 (deftest emit-code-test
   (let [{:keys [action payload]}
         (validate ["-x" "examples/local-mode/hello-world.md.js"])]
-    (is (= :local action))
+    (is (= :outside action))
     (is (get-in payload [:options :emit-code]))))
 
 (deftest max-expand-times-test
   (let [{:keys [action payload]}
         (validate ["-m" "12"
                    "examples/local-mode/hello-world.md.js"])]
-    (is (= :local action))
+    (is (= :outside action))
     (is (= 12 (get-in payload [:options :expand-limit])))))

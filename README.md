@@ -293,11 +293,69 @@ h6.danger {
 
 ## HTTP Server
 
-**TODO**
+Run a simple HTTP server:
 
-## Escape
+```sh
+cd examples/server-mode
+docker run --rm -d -v $PWD:/jssp -p 8080:8080 redraiment/jssp -s
+http GET 'http://localhost:8080/index.html.groovy'
+```
 
-**TODO**
+*Template*: examples/server-mode/index.html.groovy
+
+```html
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta name="renderer" content="webkit" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+    <title>Hello JSSP</title>
+    <link rel="stylesheet" href="styles/index.css.js" />
+  </head>
+  <body>
+    <h1>Hello JVM Scripting Server Pages</h1>
+    <dl>
+      [! request.each { key, value -> !]
+      <dt>[= escape(key) =]</dt>
+      <dd>[= escape(value) =]</dd>
+      [! } !]
+    </dl>
+  </body>
+</html>
+```
+
+*Template*: examples/server-mode/styles/index.css.js
+
+```css
+[!
+ var backgroundColor = 'lavender';
+ var foregroundColor = 'blue';
+ var fontSize = 12;
+
+ var em = function(size) {
+     if (arguments.length === 0) {
+         size = 1.0;
+     }
+     return Math.floor(fontSize * size) + 'px';
+ };
+!]
+
+body {
+    background-color: [= backgroundColor =];
+    color: [= foregroundColor =];
+    font-size: [= em() =];
+}
+
+dt {
+    font-size: [= em(1.5) =];
+}
+```
+
+*Output*:
+
+![ScreenShot](https://github.com/redraiment/jssp/blob/main/examples/server-mode/images/screenshot.png)
 
 # Command Reference
 
@@ -312,7 +370,7 @@ jssp [options] TEMPLATE-FILE
 Server-side mode: to run the inner web server:
 
 ```sh
-jssp [-s | --server] [options] WORK-DIRECTORY
+jssp [-s | --server] [options]
 ```
 
 ## Options
@@ -326,6 +384,8 @@ jssp [-s | --server] [options] WORK-DIRECTORY
 * `--executing-expression PATTERN`: executing expression pattern, default `[= =]`.
 * `-m, --expand-limit TIMES`: set the limit times for expanding phase, it's infinite if not provides.
 * `-x, --emit-code`: emit expanded code.
+* `-s, --server`: start inner http server.
+* `-p, --port PORT`: http server port, default 8080.
 * `-h, --help`: show help and exit.
 
 ## Built-in Functions
@@ -339,6 +399,10 @@ It usually used with expanding expression pattern to include a shared fragment c
 ### includeOnce
 
 The `includeOnce` function is identical to `include` except JSSP will check if the file has already been included, and if so, not include it again.
+
+### escape
+
+The `escape` function escapes the characters in a String using HTML entities.
 
 # Contributing
 

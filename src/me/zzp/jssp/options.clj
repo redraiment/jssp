@@ -73,7 +73,7 @@
    ["-m" "--expand-limit TIMES" "limit expanding phase run times"
     :default nil
     :parse-fn #(Long/parseLong %)]
-   ["-x" "--emit-code" "emit converted code"]
+   ["-x" "--emit-code" "emit expanded code"]
    ["-h" "--help" "show help and exit"]])
 
 (defn usage
@@ -87,7 +87,7 @@
 
 SYNOPSIS
 
-  jssp [options] FILE
+  jssp [options] TEMPLATE-FILE
   jssp [-s | --server] [options] WORK-DIRECTORY
 
 OPTIONS
